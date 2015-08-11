@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>chromecast testing</title>
+<script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
+</head>
+<body>
+  <script type="text/javascript">
+    "use strict";
+    this.callback = function(message) {
+      return function() {
+        console.log(message);
+      };
+    };
+
+    // session: chrome.cast.Session
+    this.sessionListener = function(session) {
+      console.log("session listener");
+      // console.log(session);
+      var sourceUrl = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+      var mediaInfo = new chrome.cast.media.MediaInfo(sourceUrl, 'video/mp4');
+      var loadRequest = new chrome.cast.media.LoadRequest(mediaInfo);
+      loadRequest.autoplay = true;
+
+      session.loadMedia(loadRequest,
+        this.callback("loadMediaSuccess"),
+        this.callback("loadMediaError"));
+    };
+
+    this.receiverListener = function() {
+      console.log("receiver listener");
+    };
+
+    this.onInitSuccess = function() {
+      console.log("init success");
+    };
+
+    this.onError =  function() {
+      console.log("onError");
+    };
+
+    this.onLaunchError = function () {
+      console.log("launch error");
+    };
+
+    this.initializeCastPlayer = function() {
+      var applicationID = '4F8B3483';
+      var sessionRequest = new chrome.cast.SessionRequest(applicationID);
+      var apiConfig = new chrome.cast.ApiConfig(sessionRequest,
+        this.sessionListener.bind(this),
+        this.receiverListener.bind(this),
+        chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED);
+
+      chrome.cast.initialize(apiConfig, this.onInitSuccess.bind(this), this.onError.bind(this));
+
+      console.log("launching app...");
+      chrome.cast.requestSession(
+        this.sessionListener.bind(this),
+        this.onLaunchError.bind(this));
+    };
+
+    if (!chrome.cast || !chrome.cast.isAvailable) {
+      setTimeout(this.initializeCastPlayer.bind(this), 1000);
+    }
+  </script>
+
+  <ul>
+    <li>initialize chrome.cast.SessionRequest</li>
+    <li>intialize chrome.cast.ApiConfig</li>
+    <li>chrome.cast.initialize</li>
+
+    <li>sessionListener: callback when a session is started</li>
+    <li>receiverListener: callback notifying what chromecast receivers are available</li>
+  </ul>
+</body>
+</html>
